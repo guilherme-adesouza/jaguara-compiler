@@ -15,7 +15,7 @@ This executes a script that compile `Jaguara.g` file with [ANTLR](https://github
 - JaguaraParser.java
 - JaguaraLexer.tokens
 
-These Java files are compiled by ANTLR in the script, making it possible to create a "Jaguara code" () and compile.
+These Java files are compiled by ANTLR in the script, making it possible to create a "Jaguara code" and compile.
 
 After this, the Java Assembler [Jasmin](https://github.com/davidar/jasmin) to convert ANTLR code into JVM code.
 
