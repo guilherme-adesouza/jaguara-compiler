@@ -1,3 +1,20 @@
+#Compiled Jaguara Files
+*.j
+JaguaraBaseListener.java
+JaguaraLexer.java
+JaguaraListener.java
+JaguaraParser.java
+JaguaraLexer.tokens
+
+#Libraries
+
+#Idea files
+.idea
+
+#VSCode files
+.vscode
+.history
+
 # Compiled class file
 *.class
 
@@ -11,7 +28,6 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
