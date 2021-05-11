@@ -5,6 +5,7 @@ JaguaraLexer.java
 JaguaraListener.java
 JaguaraParser.java
 JaguaraLexer.tokens
+Jaguara.tokens
 
 #Libraries
 
