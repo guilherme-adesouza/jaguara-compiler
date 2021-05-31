@@ -3,9 +3,27 @@ grammar Jaguara;
 /*---------------- COMPILER INTERNALS ----------------*/
 
 @header {
+import java.util.ArrayList;
 }
 
 @members {
+    private static ArrayList<String> symbol_table;
+    private static ArrayList<Character> type_table;
+
+    private static int stack_cur = 1;
+    private static int stack_max = 1;
+
+    private static boolean has_error;
+    private static int if_count = 0;
+    private static int while_count = 0;
+
+    public static void emit(String bytecode, int delta) {
+        System.out.println("    " + bytecode);
+        stack_cur += delta;
+        if (stack_cur > stack_max) {
+            stack_max = stack_cur;
+        }
+    }
 
     public static void main(String[] args) throws Exception
     {
@@ -14,9 +32,17 @@ grammar Jaguara;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JaguaraParser parser = new JaguaraParser(tokens);
 
-        //symbol_table = new ArrayList<String>();        
+        symbol_table = new ArrayList<String>();
+        type_table = new ArrayList<Character>();
+
+        has_error = false;
+
         parser.program();
-        //System.out.println("symbols: " + symbol_table);
+
+        if (has_error == true) {
+            System.err.println("Errors found!");
+            System.exit(1);
+        }
     }
 }
 
@@ -27,15 +53,27 @@ MINUS: '-';
 TIMES: '*';
 OVER: '/';
 REMAINDER: '%';
+
 OPEN_C: '{';
 CLOSE_C: '}';
 OPEN_P: '(';
 CLOSE_P: ')';
 ATTRIB: '=';
+SEMI_C: ';';
+
+EQ: '==' ;
+NE: '!=' ;
+GT: '>'  ;
+GE: '>=' ;
+LT: '<'  ;
+LE: '<=' ;
 
 FUNC: 'function';
 MAIN: 'main';
 PRINT: 'print';
+IF: 'if';
+ELSE: 'else';
+WHILE: 'while';
 
 VAR: 'a' ..'z'+;
 NUM: '0' ..'9'+;
@@ -63,22 +101,121 @@ main:
                 System.out.println(".end method");
             };
 
-statement:
-	NL
-	| PRINT OPEN_P {   System.out.println("    getstatic java/lang/System/out Ljava/io/PrintStream;");
-		} expression CLOSE_P NL {   System.out.println("    invokevirtual java/io/PrintStream/println(I)V\n");  
-		};
+statement: NL | st_print | st_if | st_attrib | st_while;
 
-expression:
-	term (
-		op = (PLUS | MINUS) term { System.out.println(($op.type == PLUS) ? "    iadd" : "    isub"); 
-			}
-	)*;
+st_print:
+    PRINT OPEN_P {   System.out.println("    getstatic java/lang/System/out Ljava/io/PrintStream;");
+    } expression CLOSE_P NL {   System.out.println("    invokevirtual java/io/PrintStream/println(I)V\n");
+	};
+
+st_if
+    :
+        {
+            if_count++;
+            int if_local = if_count;
+        }
+        IF comparison_if OPEN_C (statement) + CLOSE_C
+        { System.out.println("NOT_IF_" + if_local + ":"); }
+    ;
+
+comparison_if
+    :
+        e1 = expression op = (EQ | NE | GT | GE | LT | LE) e2 = expression
+        {
+            if ($e1.type == 'l' || $e2.type == 'l') {
+                System.err.println("Error: cannot use List without index.");
+                has_error = true;
+            }
+
+			if ($e1.type != $e2.type) {
+                System.err.println("Error: impossible to compare different types.");
+                has_error = true;
+            }
+
+            if ($op.type == EQ) { emit("\nif_icmpne NOT_IF_" + if_count, - 2); }
+            else if ($op.type == NE) { emit("\nif_icmpeq NOT_IF_" + if_count, - 2); }
+            else if ($op.type == GT) { emit("\nif_icmple NOT_IF_" + if_count, - 2); }
+            else if ($op.type == GE) { emit("\nif_icmplt NOT_IF_" + if_count, - 2); }
+            else if ($op.type == LT) { emit("\nif_icmpge NOT_IF_" + if_count, - 2); }
+            else if ($op.type == LE) { emit("\nif_icmpgt NOT_IF_" + if_count, - 2); }
+        }
+    ;
+
+st_attrib
+    :
+        VAR ATTRIB e = expression SEMI_C
+        {
+            if (!symbol_table.contains($VAR.text)) {
+                symbol_table.add($VAR.text);
+                type_table.add($e.type);
+            } else {
+                if (type_table.get(symbol_table.indexOf($VAR.text)) != $e.type) {
+                   System.err.println("Error: impossible to change variable type.");
+                   has_error = true;
+                }
+            }
+
+            if ($e.type == 'i') {
+                emit("istore " + symbol_table.indexOf($VAR.text), - 1);
+            } else {
+                emit("astore " + symbol_table.indexOf($VAR.text), - 1);
+            }
+        }
+    ;
+
+st_while
+    :
+        {
+            while_count++;
+            int while_local = while_count;
+        }
+        { System.out.println("BEGIN_WHILE_" + while_local + ":"); }
+
+        WHILE comparison_while OPEN_C (statement) + CLOSE_C
+        {
+            emit("    goto BEGIN_WHILE_" + while_local, 1);
+            System.out.println("NOT_WHILE_" + while_local + ":");
+        }
+    ;
+
+comparison_while
+    :
+        e1 = expression
+        op = (EQ | NE | GT | GE | LT | LE)
+        e2 = expression
+        {
+            if ($e1.type == 'l' || $e2.type == 'l') {
+                System.err.println("Error: cannot use List without index.");
+                has_error = true;
+            }
+
+            if ($e1.type != $e2.type) {
+                System.err.println("Error: impossible to compare different types.");
+                has_error = true;
+            }
+
+            if ($op.type == EQ) { emit("\nif_icmpne NOT_WHILE_" + while_count, - 2); }
+            else if ($op.type == NE) { emit("\nif_icmpeq NOT_WHILE_" + while_count, - 2); }
+            else if ($op.type == GT) { emit("\nif_icmple NOT_WHILE_" + while_count, - 2); }
+            else if ($op.type == GE) { emit("\nif_icmplt NOT_WHILE_" + while_count, - 2); }
+            else if ($op.type == LT) { emit("\nif_icmpge NOT_WHILE_" + while_count, - 2); }
+            else if ($op.type == LE) { emit("\nif_icmpgt NOT_WHILE_" + while_count, - 2); }
+        }
+    ;
+
+expression returns [char type]:
+	t1 = term ( op = ( PLUS | MINUS ) t2 = term
+	{
+	    System.out.println(($op.type == PLUS) ? "    iadd" : "    isub");
+	}
+	)*
+	{
+	}
+	;
 
 term:
 	factor (
-		op = (TIMES | OVER) factor { System.out.println(($op.type == TIMES) ? "    imul" : "    idiv"); 
-			}
+		op = (TIMES | OVER) factor { System.out.println(($op.type == TIMES) ? "    imul" : "    idiv"); }
 	)*;
 
 factor:
