@@ -1,5 +1,8 @@
 function main() {
-    if (6 < 4) {
-        print(5 + 1)
+    if (6 > 4) {
+        print(1)
+    }
+    while (4 < 3) {
+        print(1 + 5)
     }
 }
