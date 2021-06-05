@@ -243,5 +243,20 @@ factor returns [char type]:
             emit("ldc " + $STRING.text, + 1);
             $type = 'a';
         }
-    | OPEN_P expression CLOSE_P;
+    |   VAR
+        {
+            if (!symbol_table.contains($VAR.text)) {
+                System.err.println("Error: variable '" + $VAR.text + "' not declared.");
+                has_error = true;
+            } else {
+                if (type_table.get(symbol_table.indexOf($VAR.text)) == 'i') {
+                    emit("iload " + symbol_table.indexOf($VAR.text), + 1);
+                } else {
+                    emit("aload " + symbol_table.indexOf($VAR.text), + 1);
+                }
+
+                $type = type_table.get(symbol_table.indexOf($VAR.text));
+            }
+        }
+    ;
 
