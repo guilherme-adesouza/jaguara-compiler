@@ -107,10 +107,10 @@ statement: NL | st_print | st_if | st_attrib | st_while;
 st_print:
     PRINT OPEN_P
     {
-        emit("    getstatic java/lang/System/out Ljava/io/PrintStream;", -1);
-    } expression CLOSE_P NL
+        emit("getstatic java/lang/System/out Ljava/io/PrintStream;", -1);
+    } expression CLOSE_P SEMI_C NL
     {
-        emit("    invokevirtual java/io/PrintStream/println(I)V\n", -1);
+        emit("invokevirtual java/io/PrintStream/println(I)V\n", -1);
 	};
 
 st_if:

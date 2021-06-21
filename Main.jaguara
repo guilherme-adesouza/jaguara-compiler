@@ -3,10 +3,14 @@ function main() {
     a = 3;
     if (a > 4) {
         # Outro Comentario
-        print(1)
+        print(1);
+    }
+    if (1 < 4) {
+        # Outro Comentario
+        print(a);
     }
     while (4 < 3) {
         # Novamente, outro comentario
-        print(1 + 5)
+        print(1 + 5);
     }
 }
