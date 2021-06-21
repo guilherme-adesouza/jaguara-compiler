@@ -1,9 +1,12 @@
 function main() {
+    # Um Comentario
     a = 3;
     if (a > 4) {
+        # Outro Comentario
         print(1)
     }
     while (4 < 3) {
+        # Novamente, outro comentario
         print(1 + 5)
     }
 }

@@ -80,7 +80,7 @@ STRING : '"' ~["]* '"';
 NUMBER : '0' ..'9'+;
 NL     : ('\r')? '\n';
 SPACE  : (' ' | '\t')+ { skip(); };
-
+COMMENT: '#' ~[\r\n]* { skip(); };
 /*---------------- PARSER RULES ----------------*/
 
 program: main;
