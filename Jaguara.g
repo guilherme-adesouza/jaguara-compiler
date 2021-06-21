@@ -174,7 +174,7 @@ st_while:
 
     WHILE OPEN_P comparison_while CLOSE_P OPEN_C (statement) + CLOSE_C
     {
-        emit("    goto BEGIN_WHILE_" + while_local, 1);
+        emit("goto BEGIN_WHILE_" + while_local, 1);
         emit("NOT_WHILE_" + while_local + ":", -1);
     }
     ;
@@ -210,7 +210,7 @@ expression returns [char type]:
             System.err.println("Error: impossible to compare different types.");
             has_error = true;
         }
-        emit(($op.type == PLUS) ? "    iadd" : "    isub", - 1);
+        emit(($op.type == PLUS) ? "iadd" : "isub", - 1);
     }
     )*
     { $type = $t1.type; }
